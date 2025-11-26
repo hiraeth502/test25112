@@ -1,267 +1,176 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>구구단 산성비 게임</title>
-    <style>
-        /* 1. 스타일(디자인) 설정 */
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #222;
-            color: white;
-            font-family: 'Malgun Gothic', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+  <meta charset="UTF-8">
+  <title>두더지 잡기 게임</title>
+  <style>
+    /* 1. 스타일(CSS): 게임의 디자인을 담당 */
+    body {
+      text-align: center;
+      font-family: 'Jua', sans-serif; /* 귀여운 폰트가 없다면 기본 폰트 적용됨 */
+      background-color: #ffeb3b;
+      margin: 0;
+      padding: 20px;
+    }
 
-        h1 { margin-top: 20px; }
+    h1 {
+      font-size: 50px;
+      margin-bottom: 10px;
+    }
 
-        /* 게임 화면 영역 */
-        #game-container {
-            position: relative;
-            width: 800px;
-            height: 500px;
-            background-color: #000;
-            border: 4px solid #4CAF50;
-            border-radius: 10px;
-            overflow: hidden; /* 영역 밖으로 나간 글자 숨김 */
-            margin-bottom: 20px;
-        }
+    .score-board {
+      font-size: 30px;
+      margin-bottom: 20px;
+    }
 
-        /* 떨어지는 문제(빗방울) 스타일 */
-        .raindrop {
-            position: absolute;
-            font-size: 20px;
-            font-weight: bold;
-            color: #fff;
-            white-space: nowrap;
-        }
+    button {
+      padding: 10px 30px;
+      font-size: 20px;
+      cursor: pointer;
+      background-color: #fff;
+      border: 2px solid #333;
+      border-radius: 10px;
+    }
 
-        /* 바닥에 닿는 경계선 (빨간 줄) */
-        #danger-line {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 5px;
-            background-color: red;
-            box-shadow: 0 0 10px red;
-        }
+    /* 게임 판 (3x3 그리드) */
+    .game {
+      width: 600px;
+      height: 400px;
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0 auto;
+    }
 
-        /* 하단 입력 및 정보창 */
-        #ui-bar {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            font-size: 24px;
-        }
+    .hole {
+      flex: 1 0 33.33%; /* 3열 배치 */
+      overflow: hidden; /* 두더지가 구멍 밖으로 넘치지 않게 숨김 */
+      position: relative;
+    }
 
-        input[type="number"] {
-            padding: 10px;
-            font-size: 24px;
-            width: 150px;
-            text-align: center;
-            border-radius: 5px;
-            border: none;
-        }
+    /* 흙더미 이미지 (CSS로 표현) */
+    .hole:after {
+      content: '';
+      display: block;
+      background: url('https://raw.githubusercontent.com/wesbos/JavaScript30/master/30%20-%20Whack%20A%20Mole/dirt.svg') bottom center no-repeat;
+      background-size: contain;
+      width: 100%;
+      height: 70px;
+      position: absolute;
+      z-index: 2;
+      bottom: -30px;
+    }
 
-        /* 게임 시작/종료 오버레이 */
-        #overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-        }
-        
-        button {
-            padding: 15px 30px;
-            font-size: 24px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-        button:hover { background-color: #45a049; }
+    /* 두더지 이미지 */
+    .mole {
+      background: url('https://raw.githubusercontent.com/wesbos/JavaScript30/master/30%20-%20Whack%20A%20Mole/mole.svg') bottom center no-repeat;
+      background-size: 60%;
+      position: absolute;
+      top: 100%; /* 처음에 숨겨둠 */
+      width: 100%;
+      height: 100%;
+      transition: all 0.4s;
+      cursor: crosshair; /* 조준점 커서 */
+    }
 
-        .game-info { color: #aaa; margin-bottom: 20px; }
-    </style>
+    /* 두더지가 올라왔을 때 */
+    .hole.up .mole {
+      top: 0;
+    }
+  </style>
 </head>
 <body>
 
-    <h1>🌧️ 구구단 산성비 게임 🌧️</h1>
+  <h1>두더지 잡기! 🔨</h1>
+  <div class="score-board">
+    점수: <span class="score">0</span> <br>
+    남은 시간: <span class="time">10</span>초
+  </div>
+  <button onClick="startGame()">게임 시작!</button>
 
-    <!-- 게임 화면 -->
-    <div id="game-container">
-        <div id="danger-line"></div>
-        <!-- 시작 화면 레이어 -->
-        <div id="overlay">
-            <h2 id="msg-title">구구단 연습을 시작해볼까요?</h2>
-            <p class="game-info">정답을 입력하고 [Enter]를 누르세요!</p>
-            <button onclick="startGame()">게임 시작</button>
-        </div>
-    </div>
+  <div class="game">
+    <div class="hole hole1"><div class="mole"></div></div>
+    <div class="hole hole2"><div class="mole"></div></div>
+    <div class="hole hole3"><div class="mole"></div></div>
+    <div class="hole hole4"><div class="mole"></div></div>
+    <div class="hole hole5"><div class="mole"></div></div>
+    <div class="hole hole6"><div class="mole"></div></div>
+  </div>
 
-    <!-- 점수 및 입력창 -->
-    <div id="ui-bar">
-        <span>점수: <b id="score">0</b></span>
-        <span>생명: <b id="life" style="color:red">❤❤❤</b></span>
-        <input type="number" id="input-answer" placeholder="정답 입력" autofocus onkeydown="checkEnter(event)">
-    </div>
+<script>
+  /* 2. 자바스크립트(JS): 게임의 동작을 담당 */
+  const holes = document.querySelectorAll('.hole');
+  const scoreBoard = document.querySelector('.score');
+  const timeBoard = document.querySelector('.time');
+  const moles = document.querySelectorAll('.mole');
+  
+  let lastHole;
+  let timeUp = false;
+  let score = 0;
+  let countdown;
 
-    <script>
-        /* 2. 자바스크립트(게임 로직) 설정 */
-        
-        const gameContainer = document.getElementById('game-container');
-        const inputField = document.getElementById('input-answer');
-        const scoreEl = document.getElementById('score');
-        const lifeEl = document.getElementById('life');
-        const overlay = document.getElementById('overlay');
-        const msgTitle = document.getElementById('msg-title');
+  // 랜덤한 시간 생성 (두더지가 올라와 있는 시간)
+  function randomTime(min, max) {
+    return Math.round(Math.random() * (max - min) + min);
+  }
 
-        let score = 0;
-        let lives = 3;
-        let isPlaying = false;
-        let rainInterval; // 문제 생성 타이머
-        let moveInterval; // 움직임 타이머
-        let raindrops = []; // 현재 화면에 있는 문제들 저장
-        let dropSpeed = 2; // 떨어지는 속도 (조절 가능)
+  // 랜덤한 구멍 선택
+  function randomHole(holes) {
+    const idx = Math.floor(Math.random() * holes.length);
+    const hole = holes[idx];
+    if (hole === lastHole) {
+      return randomHole(holes); // 같은 구멍이 나오면 다시 추첨
+    }
+    lastHole = hole;
+    return hole;
+  }
 
-        // 게임 시작 함수
-        function startGame() {
-            // 초기화
-            score = 0;
-            lives = 3;
-            dropSpeed = 2;
-            raindrops.forEach(drop => drop.element.remove()); // 기존 문제 제거
-            raindrops = [];
-            scoreEl.innerText = score;
-            updateLifeUI();
-            
-            isPlaying = true;
-            overlay.style.display = 'none'; // 오버레이 숨김
-            inputField.value = '';
-            inputField.focus();
+  // 두더지 튀어나오게 하기
+  function peep() {
+    const time = randomTime(200, 1000); // 0.2초 ~ 1초 사이 랜덤
+    const hole = randomHole(holes);
+    hole.classList.add('up');
 
-            // 루프 시작
-            rainInterval = setInterval(createProblem, 1000); // 1초마다 문제 생성
-            moveInterval = setInterval(moveRaindrops, 20); // 0.02초마다 움직임 업데이트
-        }
+    setTimeout(() => {
+      hole.classList.remove('up');
+      if (!timeUp) peep(); // 게임 시간이 안 끝났으면 계속 반복
+    }, time);
+  }
 
-        // 구구단 문제 생성
-        function createProblem() {
-            if (!isPlaying) return;
+  // 게임 시작
+  function startGame() {
+    scoreBoard.textContent = 0;
+    timeBoard.textContent = 10;
+    score = 0;
+    timeUp = false;
+    
+    // 기존 타이머가 있다면 제거
+    if(countdown) clearInterval(countdown);
 
-            const a = Math.floor(Math.random() * 8) + 2; // 2~9단
-            const b = Math.floor(Math.random() * 9) + 1; // 1~9
-            const problemText = `${a} x ${b}`;
-            const answer = a * b;
+    peep();
+    
+    // 카운트다운 로직
+    let timeLeft = 10;
+    countdown = setInterval(() => {
+      timeLeft--;
+      timeBoard.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(countdown);
+        timeUp = true;
+        alert('게임 종료! 당신의 점수는: ' + score + '점 입니다.');
+      }
+    }, 1000);
+  }
 
-            // HTML 요소 생성
-            const dropEl = document.createElement('div');
-            dropEl.classList.add('raindrop');
-            dropEl.innerText = problemText;
-            
-            // 랜덤 위치 (화면 너비 800px 안에서)
-            const randomX = Math.floor(Math.random() * 700) + 10; 
-            dropEl.style.left = randomX + 'px';
-            dropEl.style.top = '0px';
+  // 두더지를 때렸을 때
+  function bonk(e) {
+    if(!e.isTrusted) return; // 스크립트로 클릭 조작 방지
+    score++;
+    this.parentNode.classList.remove('up'); // 맞으면 바로 들어감
+    scoreBoard.textContent = score;
+  }
 
-            gameContainer.appendChild(dropEl);
+  moles.forEach(mole => mole.addEventListener('click', bonk));
 
-            // 배열에 데이터 저장
-            raindrops.push({
-                element: dropEl,
-                answer: answer,
-                y: 0
-            });
-        }
-
-        // 문제 이동 및 충돌 체크
-        function moveRaindrops() {
-            if (!isPlaying) return;
-
-            // 모든 빗방울을 아래로 이동
-            for (let i = 0; i < raindrops.length; i++) {
-                let drop = raindrops[i];
-                drop.y += dropSpeed;
-                drop.element.style.top = drop.y + 'px';
-
-                // 바닥에 닿았을 때 (게임 오버 판정)
-                if (drop.y > 470) { 
-                    removeDrop(i); // 화면에서 제거
-                    lives--; // 생명 감소
-                    updateLifeUI();
-                    i--; // 배열 인덱스 보정
-
-                    if (lives <= 0) {
-                        gameOver();
-                    }
-                }
-            }
-        }
-
-        // 정답 확인 (엔터키 눌렀을 때)
-        function checkEnter(event) {
-            if (event.key === 'Enter') {
-                const userAnswer = parseInt(inputField.value);
-                
-                // 현재 화면에 있는 문제들 중 정답 찾기
-                // (가장 아래에 있는 문제부터 확인하기 위해 역순 탐색도 좋음, 여기선 앞에서부터)
-                let matched = false;
-                for (let i = 0; i < raindrops.length; i++) {
-                    if (raindrops[i].answer === userAnswer) {
-                        // 정답!
-                        removeDrop(i);
-                        score += 10;
-                        scoreEl.innerText = score;
-                        matched = true;
-                        
-                        // 점수가 오르면 속도 증가 (난이도 조절)
-                        if (score % 50 === 0) dropSpeed += 0.5;
-                        
-                        break; // 한 번에 하나씩만 제거
-                    }
-                }
-
-                inputField.value = ''; // 입력창 비우기
-            }
-        }
-
-        // 빗방울 제거 함수
-        function removeDrop(index) {
-            if (raindrops[index]) {
-                raindrops[index].element.remove(); // HTML 삭제
-                raindrops.splice(index, 1); // 배열 삭제
-            }
-        }
-
-        // 생명 표시 업데이트
-        function updateLifeUI() {
-            let hearts = "";
-            for(let i=0; i<lives; i++) hearts += "❤";
-            lifeEl.innerText = hearts;
-            lifeEl.style.color = lives === 1 ? "red" : "pink";
-        }
-
-        // 게임 종료 처리
-        function gameOver() {
-            isPlaying = false;
-            clearInterval(rainInterval);
-            clearInterval(moveInterval);
-            
-            msgTitle.innerText = `게임 오버! 최종 점수: ${score}점`;
-            overlay.style.display = 'flex'; // 다시 시작 화면 표시
-        }
-    </script>
+</script>
 </body>
 </html>
